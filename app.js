@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '1.3.0';
 
   /* Data usaha bawaan. Bisa diubah di menu Pengaturan; tombol "Kembalikan data bawaan" memakai nilai ini. */
   const DEFAULTS = Object.freeze({
@@ -148,6 +148,13 @@
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   }
   const inAppBrowser = /; wv\)|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const savedPlace = isIOS ? 'app File' : 'folder Download';
+  function iosDismissed() {
+    try { const t = Number(localStorage.getItem('wb-ios-install-later') || 0); return t && (Date.now() - t) < 7 * 86400000; }
+    catch (e) { return false; }
+  }
   const canShareFiles = (() => {
     try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files: [new File(['x'], 'x.pdf', { type: 'application/pdf' })] })); }
     catch (e) { return false; }
@@ -292,11 +299,28 @@
       </ol>
     </details>`;
   }
+  function iosInstallCard(where) {
+    if (where !== 'settings' && iosDismissed()) return '';
+    return `<div class="banner ios"><div class="b-text">
+        <strong>Pasang di layar utama iPhone</strong>
+        <p>Penting agar data invoice tidak terhapus otomatis oleh Safari, dan aplikasi bisa dibuka tanpa internet.</p>
+        <ol class="steps">
+          <li>Buka halaman ini di <b>Safari</b>.</li>
+          <li>Ketuk tombol <b>Bagikan</b> <span class="glyph">${icon('share', 15)}</span>. Di iOS 26, ketuk <b>⋯</b> dulu, lalu <b>Bagikan</b>.</li>
+          <li>Pilih <b>Tambah ke Layar Utama</b> (Add to Home Screen).</li>
+          <li>Biarkan <b>Buka sebagai App Web</b> (Open as Web App) menyala, lalu ketuk <b>Tambah</b>.</li>
+        </ol></div>
+        ${where !== 'settings' ? '<div class="b-actions"><button type="button" class="btn small" data-act="ios-later">Nanti saja</button></div>' : ''}
+      </div>`;
+  }
   function installCard(where) {
     if (isStandalone()) return '';
     if (inAppBrowser) {
-      return `<div class="banner warn"><div class="b-text"><strong>Buka di Chrome</strong><p>Halaman ini terbuka di browser bawaan aplikasi lain. Unduh PDF dan pasang aplikasi hanya berjalan di Chrome. Ketuk menu ⋮ lalu pilih <b>Buka di Chrome</b>.</p></div></div>`;
+      return isIOS
+        ? `<div class="banner warn"><div class="b-text"><strong>Buka di Safari</strong><p>Halaman ini terbuka di browser bawaan aplikasi lain. Untuk menyimpan PDF dan memasang aplikasi, buka halaman ini di <b>Safari</b> (cari tombol kompas atau menu <b>Buka di Safari</b>).</p></div></div>`
+        : `<div class="banner warn"><div class="b-text"><strong>Buka di Chrome</strong><p>Halaman ini terbuka di browser bawaan aplikasi lain. Unduh PDF dan pasang aplikasi hanya berjalan di Chrome. Ketuk menu ⋮ lalu pilih <b>Buka di Chrome</b>.</p></div></div>`;
     }
+    if (isIOS) return iosInstallCard(where);
     if (S.installEvt) {
       return `<div class="banner"><div class="b-text"><strong>Pasang di layar utama</strong><p>Buka invoice langsung dari ikon W Invoice, tetap bisa dipakai tanpa internet.</p></div>
         <div class="b-actions"><button class="btn primary small" data-act="install">${icon('install', 18)}Pasang aplikasi</button></div></div>${where === 'settings' ? installHelp() : ''}`;
@@ -655,17 +679,18 @@
   /* Tombol utama selebar layar; tombol lain berpasangan, yang tersisa sendiri dibuat selebar layar. */
   function detailActions(waLink) {
     const primary = canShareFiles
-      ? `<button type="button" class="btn primary span2" data-act="share-pdf">${icon('share')}Bagikan PDF</button>`
+      ? `<button type="button" class="btn primary span2" data-act="share-pdf">${icon('share')}${isIOS ? 'Bagikan / Simpan PDF' : 'Bagikan PDF'}</button>`
       : `<button type="button" class="btn primary span2" data-act="download-pdf">${icon('download')}Unduh PDF</button>`;
     const rest = [];
-    if (canShareFiles) rest.push(['btn', `data-act="download-pdf"`, icon('download') + 'Unduh PDF', 'button']);
+    if (canShareFiles && !isIOS) rest.push(['btn', `data-act="download-pdf"`, icon('download') + 'Unduh PDF', 'button']);
     rest.push(['btn', `data-act="print"`, icon('print') + 'Cetak', 'button']);
     if (waLink) rest.push(['btn soft', `href="${esc(waLink)}" target="_blank" rel="noopener"`, icon('chat') + 'Kirim WA', 'a']);
     const html = rest.map(([cls, attrs, label, tag], i) => {
       const wide = (rest.length % 2 === 1 && i === rest.length - 1) ? ' span2' : '';
       return tag === 'a' ? `<a class="${cls}${wide}" ${attrs}>${label}</a>` : `<button type="button" class="${cls}${wide}" ${attrs}>${label}</button>`;
     }).join('');
-    return primary + html;
+    const hint = (isIOS && canShareFiles) ? '<p class="dt-hint span2">Untuk menyimpan, pilih <b>Simpan ke File</b> di menu Bagikan.</p>' : '';
+    return primary + html + hint;
   }
 
   /* ---------------- Pratinjau ---------------- */
@@ -776,7 +801,7 @@
     const inv = byId(S.route.id);
     if (!inv) return;
     setBusy(btn, true, 'Membuat PDF…');
-    try { downloadBlob(await getPdf(inv), pdfName(inv)); S.lastPdfError = null; toast('PDF diunduh. Cek notifikasi atau folder Download.'); }
+    try { downloadBlob(await getPdf(inv), pdfName(inv)); S.lastPdfError = null; toast(isIOS ? 'PDF siap. Pilih Unduh, lalu buka app File.' : 'PDF diunduh. Cek notifikasi atau folder Download.'); }
     catch (err) { pdfFail(err); }
     finally { setBusy(btn, false); }
   }
@@ -799,7 +824,7 @@
         try { await share(); return; } catch (e2) { if (e2 && e2.name === 'AbortError') return; }
       }
       downloadBlob(blob, file.name);
-      toast('Tidak bisa membagikan. PDF diunduh ke folder Download.');
+      toast('Tidak bisa membagikan. PDF diunduh ke ' + savedPlace + '.');
     }
   }
 
@@ -827,11 +852,12 @@
     const sw = ('serviceWorker' in navigator) ? (navigator.serviceWorker.controller ? 'aktif' : 'belum aktif') : 'tidak didukung';
     return [
       ['Versi aplikasi', APP_VERSION],
+      ['Perangkat', isIOS ? 'iPhone / iPad (iOS)' : (isAndroid ? 'Android' : 'Lainnya')],
       ['Mode', isStandalone() ? 'Aplikasi terpasang' : (inAppBrowser ? 'Browser di dalam aplikasi lain' : 'Browser')],
       ['Mode offline', sw],
       ['Bagikan file', canShareFiles ? 'didukung' : 'tidak didukung'],
       ['Penyimpanan', Store.ok ? 'normal' : 'tidak tersedia'],
-      ['Tombol pasang', S.installEvt ? 'tersedia' : (isStandalone() ? 'sudah terpasang' : 'tidak ditawarkan browser')],
+      ['Tombol pasang', isStandalone() ? 'sudah terpasang' : (isIOS ? 'manual lewat Bagikan → Tambah ke Layar Utama' : (S.installEvt ? 'tersedia' : 'tidak ditawarkan browser'))],
       ['Error PDF terakhir', S.lastPdfError || 'tidak ada'],
       ['Layar', window.innerWidth + '×' + window.innerHeight + ' @' + (window.devicePixelRatio || 1) + 'x'],
       ['Browser', navigator.userAgent]
@@ -956,10 +982,20 @@
   async function doBackup() {
     const data = { app: 'invoice-wbouquet', format: 1, exportedAt: new Date().toISOString(), settings: S.settings, invoices: S.invoices };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    downloadBlob(blob, `cadangan-invoice-${IV.today()}.json`);
+    const name = `cadangan-invoice-${IV.today()}.json`;
+    let shared = false;
+    if (isIOS && navigator.canShare && navigator.share) {
+      const file = new File([blob], name, { type: 'application/json' });
+      try {
+        if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Cadangan invoice' }); shared = true; }
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+      }
+    }
+    if (!shared) downloadBlob(blob, name);
     S.settings.lastBackup = new Date().toISOString();
     await Store.set('settings', S.settings).catch(() => {});
-    toast('File cadangan tersimpan di folder Download');
+    toast(shared ? 'File cadangan sudah disimpan atau dikirim.' : 'File cadangan tersimpan di ' + savedPlace + '.');
     if (S.route.name === 'settings') render();
   }
   async function doRestore(file) {
@@ -1199,6 +1235,10 @@
         refreshInstallSlot();
         break;
       case 'print': await onPrint(); break;
+      case 'ios-later':
+        try { localStorage.setItem('wb-ios-install-later', String(Date.now())); } catch (x) { /* abaikan */ }
+        refreshInstallSlot();
+        break;
       case 'copy-diag': {
         const text = diagInfo().map(([k, v]) => k + ': ' + v).join('\n');
         try { await navigator.clipboard.writeText(text); toast('Info teknis disalin'); }

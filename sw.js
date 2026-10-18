@@ -1,6 +1,6 @@
 /* Service worker: menyimpan file aplikasi di HP agar bisa dibuka tanpa internet.
    PENTING: setiap kali file aplikasi diubah, naikkan VERSION (mis. v2 → v3) agar HP klien mengambil versi baru. */
-const VERSION = 'wb-invoice-v3';
+const VERSION = 'wb-invoice-v4';
 const ASSETS = [
   './',
   './index.html',

@@ -142,6 +142,10 @@ body.mode-editor main{padding-bottom:calc(var(--nav-h) + var(--bar-h) + 32px + e
 .input:focus,.textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
 .input.invalid,.textarea.invalid{border-color:var(--bad-fg)}
 .input[type="date"]{min-width:0;padding-right:10px}
+.input:not([type="date"]),.textarea{-webkit-appearance:none;appearance:none}
+@supports (-webkit-touch-callout:none){.input[type="date"]{-webkit-appearance:none;appearance:none;line-height:1.35}}
+.input::-webkit-date-and-time-value{text-align:left;margin:0}
+.input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}
 .err{font-size:12.5px;font-weight:600;color:var(--bad-fg)}
 .err:empty{display:none}
 .money{position:relative}
@@ -167,6 +171,8 @@ body.mode-editor main{padding-bottom:calc(var(--nav-h) + var(--bar-h) + 32px + e
 .banner{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;background:var(--subtle);margin-bottom:20px}
 .banner.bad{background:var(--bad-bg)}
 .banner.warn{background:var(--warn-bg)}
+.banner .steps{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;line-height:1.5;color:var(--fg)}
+.banner .glyph{display:inline-flex;vertical-align:-3px;color:var(--accent)}
 .banner.warn p{color:var(--warn-fg)}
 .banner strong{display:block;font-size:15px;line-height:1.3;margin-bottom:4px}
 .banner p{margin:0;font-size:13.5px;line-height:1.5;color:var(--muted)}
@@ -249,6 +255,7 @@ body.mode-editor main{padding-bottom:calc(var(--nav-h) + var(--bar-h) + 32px + e
 .dt-meta .cn{font-size:16px;font-weight:700;color:var(--fg)}
 .dt-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px}
 .dt-actions .span2{grid-column:1 / -1}
+.dt-hint{margin:-2px 0 0;font-size:13px;color:var(--muted);text-align:center}
 .dt-more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:24px}
 @media (min-width:600px){.dt-more{grid-template-columns:repeat(4,minmax(0,1fr))}}
 

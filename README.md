@@ -27,7 +27,15 @@ Aplikasi web (PWA) untuk membuat, menyimpan, dan mengirim invoice W Bouquet Sang
 2. Ketuk tombol **Pasang aplikasi** di aplikasi, atau menu ⋮ → **Tambahkan ke layar utama / Instal aplikasi**.
 3. Ikon **W Invoice** muncul dalam beberapa detik. Setelah dibuka sekali dengan internet, aplikasi bisa dipakai offline.
 
-**Ikon tidak muncul?** Cek daftar semua aplikasi. Di HP Xiaomi, Redmi, POCO, Oppo, Realme, atau Vivo, buka **Setelan → Aplikasi → Chrome → Izin aplikasi**, aktifkan **Pintasan layar utama**, lalu ulangi langkah 2.
+### iPhone / iPad
+
+1. Buka alamat situs di **Safari**.
+2. Ketuk tombol **Bagikan** (di iOS 26: ketuk **⋯** dulu, lalu **Bagikan**), lalu pilih **Tambah ke Layar Utama**.
+3. Biarkan **Buka sebagai App Web** menyala, lalu ketuk **Tambah**.
+
+Di iPhone, aplikasi **wajib dipasang di layar utama**. Jika hanya dibuka di Safari, data invoice bisa terhapus otomatis bila situs tidak dibuka selama 7 hari. Untuk menyimpan PDF atau file cadangan, pilih **Simpan ke File** di menu Bagikan.
+
+**Ikon tidak muncul (Android)?** Cek daftar semua aplikasi. Di HP Xiaomi, Redmi, POCO, Oppo, Realme, atau Vivo, buka **Setelan → Aplikasi → Chrome → Izin aplikasi**, aktifkan **Pintasan layar utama**, lalu ulangi langkah 2.
 
 **PDF tidak terunduh?** Pakai tombol **Cetak**, lalu pilih **Simpan sebagai PDF** di dialog cetak Chrome. Jika masih bermasalah, buka **Pengaturan → Info teknis → Salin info** dan kirimkan isinya untuk dicek.
 
@@ -37,8 +45,8 @@ Aplikasi web (PWA) untuk membuat, menyimpan, dan mengirim invoice W Bouquet Sang
 |---|---|
 | Kode aplikasi | GitHub Pages, ditambah salinan otomatis di HP |
 | Invoice & pengaturan | Penyimpanan browser (IndexedDB) di HP klien, tidak dikirim ke server mana pun |
-| File PDF | Folder **Download** di HP, atau langsung dibagikan ke WhatsApp |
-| File cadangan | Folder **Download**, nama `cadangan-invoice-YYYY-MM-DD.json` |
+| File PDF | Android: folder **Download**. iPhone: app **File** (lewat Bagikan → Simpan ke File). Bisa juga langsung dibagikan ke WhatsApp |
+| File cadangan | Android: folder **Download**. iPhone: app **File**. Nama `cadangan-invoice-YYYY-MM-DD.json` |
 
 Data invoice hanya ada di satu HP. Menghapus data Chrome, uninstall, atau ganti HP akan menghapusnya, jadi **simpan cadangan secara berkala** (Pengaturan → Simpan cadangan), lalu kirim filenya ke Google Drive atau WhatsApp. Untuk memindahkan ke HP lain, pakai **Pulihkan dari file**.
 
