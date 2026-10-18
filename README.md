@@ -14,7 +14,7 @@ Aplikasi web (PWA) untuk membuat, menyimpan, dan mengirim invoice W Bouquet Sang
 ## Memasang di GitHub Pages (unggah manual)
 
 1. Buka repository di GitHub, lalu pilih **Add file → Upload files**.
-2. Ekstrak file zip di komputer. Seret **semua isi folder** (bukan foldernya) ke halaman unggah: `index.html`, `app.js`, `sw.js`, folder `fonts`, `icons`, `vendor`, dan seterusnya.
+2. Ekstrak file zip di komputer. Seret **semua isi folder** (bukan foldernya) ke halaman unggah: `index.html`, `app.js`, `sw.js`, `.nojekyll`, folder `fonts`, `icons`, `vendor`, dan seterusnya. File lama dengan nama sama akan tertimpa.
 3. Klik **Commit changes**.
 4. Buka **Settings → Pages**. Di bagian *Build and deployment*, pilih **Source: Deploy from a branch**, branch **main**, folder **/ (root)**, lalu **Save**.
 5. Tunggu 1–2 menit. Alamat situs muncul di halaman yang sama, misalnya `https://windirusdiantirahayu.github.io/invoice-wbouquet/`.
@@ -23,9 +23,13 @@ Aplikasi web (PWA) untuk membuat, menyimpan, dan mengirim invoice W Bouquet Sang
 
 ## Memasang di HP klien
 
-1. Buka alamat situs di **Chrome Android**.
+1. Buka alamat situs di aplikasi **Chrome** (bukan browser di dalam WhatsApp, Instagram, atau Facebook).
 2. Ketuk tombol **Pasang aplikasi** di aplikasi, atau menu ⋮ → **Tambahkan ke layar utama / Instal aplikasi**.
-3. Ikon W Bouquet muncul di layar utama. Setelah dibuka sekali dengan internet, aplikasi bisa dipakai offline.
+3. Ikon **W Invoice** muncul dalam beberapa detik. Setelah dibuka sekali dengan internet, aplikasi bisa dipakai offline.
+
+**Ikon tidak muncul?** Cek daftar semua aplikasi. Di HP Xiaomi, Redmi, POCO, Oppo, Realme, atau Vivo, buka **Setelan → Aplikasi → Chrome → Izin aplikasi**, aktifkan **Pintasan layar utama**, lalu ulangi langkah 2.
+
+**PDF tidak terunduh?** Pakai tombol **Cetak**, lalu pilih **Simpan sebagai PDF** di dialog cetak Chrome. Jika masih bermasalah, buka **Pengaturan → Info teknis → Salin info** dan kirimkan isinya untuk dicek.
 
 ## Di mana data tersimpan
 

@@ -1,6 +1,6 @@
 /* Service worker: menyimpan file aplikasi di HP agar bisa dibuka tanpa internet.
    PENTING: setiap kali file aplikasi diubah, naikkan VERSION (mis. v2 → v3) agar HP klien mengambil versi baru. */
-const VERSION = 'wb-invoice-v1';
+const VERSION = 'wb-invoice-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -33,7 +33,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(ASSETS)));
+  event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))));
 });
 
 self.addEventListener('activate', (event) => {

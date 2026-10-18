@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = '1.2.0';
 
   /* Data usaha bawaan. Bisa diubah di menu Pengaturan; tombol "Kembalikan data bawaan" memakai nilai ini. */
   const DEFAULTS = Object.freeze({
@@ -147,6 +147,7 @@
   function isStandalone() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   }
+  const inAppBrowser = /; wv\)|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent);
   const canShareFiles = (() => {
     try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files: [new File(['x'], 'x.pdf', { type: 'application/pdf' })] })); }
     catch (e) { return false; }
@@ -173,7 +174,9 @@
     install: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M12 7v7M9 11l3 3 3-3"/>',
     image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
     refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/>',
-    alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>'
+    alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>',
+    print: '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'
   };
   function icon(n, size) {
     const z = size || 20;
@@ -257,7 +260,7 @@
 <header class="app-header"><div class="inner">
   <a class="brand" href="#/" aria-label="Riwayat invoice">
     <img src="${esc(logoSrc())}" alt="" id="brand-logo">
-    <span style="min-width:0;display:flex;flex-direction:column;gap:2px">
+    <span class="b-txt">
       <span class="bn" id="brand-name">${esc(s.businessName || 'Invoice')}</span>
       <span class="bs">Invoice</span>
     </span>
@@ -267,9 +270,9 @@
   </nav>
 </div></header>
 <main id="main">${content}</main>
-<nav class="bottom-nav" aria-label="Menu utama">
-  ${NAV.map(([k, h, l, ic]) => `<a href="${h}" class="${k === 'new' ? 'cta' : ''}" ${active === k ? 'aria-current="page"' : ''}><span class="ic-wrap">${icon(ic, 22)}</span>${l}</a>`).join('')}
-</nav>`;
+<nav class="bottom-nav" aria-label="Menu utama"><div class="inner">
+  ${NAV.map(([k, h, l, ic]) => `<a href="${h}" class="${k === 'new' ? 'cta' : ''}" ${active === k ? 'aria-current="page"' : ''}><span class="nav-ic">${icon(ic, 22)}</span><span>${l}</span></a>`).join('')}
+</div></nav>`;
   }
 
   function statusPill(inv) {
@@ -278,14 +281,28 @@
     return `<span class="pill warn">Belum lunas</span>`;
   }
 
+  function installHelp() {
+    return `<details class="help">
+      <summary>Ikon tidak muncul setelah dipasang?</summary>
+      <ol>
+        <li>Tunggu sekitar 10 detik, lalu cek <b>daftar semua aplikasi</b> dan cari <b>W Invoice</b>.</li>
+        <li>Di HP Xiaomi, Redmi, POCO, Oppo, Realme, atau Vivo, buka <b>Setelan → Aplikasi → Chrome → Izin aplikasi</b>, lalu aktifkan <b>Pintasan layar utama</b> (Home screen shortcuts).</li>
+        <li>Kembali ke Chrome, ketuk menu ⋮ lalu <b>Tambahkan ke layar utama → Instal</b>.</li>
+        <li>Pastikan halaman dibuka di aplikasi <b>Chrome</b>, bukan browser di dalam WhatsApp, Instagram, atau Facebook.</li>
+      </ol>
+    </details>`;
+  }
   function installCard(where) {
     if (isStandalone()) return '';
+    if (inAppBrowser) {
+      return `<div class="banner warn"><div class="b-text"><strong>Buka di Chrome</strong><p>Halaman ini terbuka di browser bawaan aplikasi lain. Unduh PDF dan pasang aplikasi hanya berjalan di Chrome. Ketuk menu ⋮ lalu pilih <b>Buka di Chrome</b>.</p></div></div>`;
+    }
     if (S.installEvt) {
-      return `<div class="banner"><div class="b-text"><strong>Pasang di layar utama</strong><p>Buka invoice langsung dari ikon W Bouquet, tetap bisa dipakai tanpa internet.</p></div>
-        <div class="b-actions"><button class="btn primary small" data-act="install">${icon('install', 18)}Pasang aplikasi</button></div></div>`;
+      return `<div class="banner"><div class="b-text"><strong>Pasang di layar utama</strong><p>Buka invoice langsung dari ikon W Invoice, tetap bisa dipakai tanpa internet.</p></div>
+        <div class="b-actions"><button class="btn primary small" data-act="install">${icon('install', 18)}Pasang aplikasi</button></div></div>${where === 'settings' ? installHelp() : ''}`;
     }
     if (where === 'settings') {
-      return `<div class="banner"><div class="b-text"><strong>Pasang di layar utama</strong><p>Di Chrome Android, ketuk menu ⋮ lalu pilih <b>Tambahkan ke layar utama</b> atau <b>Instal aplikasi</b>.</p></div></div>`;
+      return `<div class="banner"><div class="b-text"><strong>Pasang di layar utama</strong><p>Di Chrome, ketuk menu ⋮ lalu pilih <b>Tambahkan ke layar utama</b> atau <b>Instal aplikasi</b>.</p></div></div>${installHelp()}`;
     }
     return '';
   }
@@ -300,7 +317,7 @@
     const sumU = unpaid.reduce((t, i) => t + invTotal(i), 0);
     const sumP = paidMonth.reduce((t, i) => t + invTotal(i), 0);
 
-    const storageWarn = Store.ok ? '' : `<div class="banner" style="background:var(--bad-bg)"><div class="b-text"><strong>Penyimpanan tidak tersedia</strong><p>Browser ini tidak mengizinkan aplikasi menyimpan data (mungkin mode penyamaran). Invoice akan hilang saat aplikasi ditutup.</p></div></div>`;
+    const storageWarn = Store.ok ? '' : `<div class="banner bad"><div class="b-text"><strong>Penyimpanan tidak tersedia</strong><p>Browser ini tidak mengizinkan aplikasi menyimpan data (mungkin mode penyamaran). Invoice akan hilang saat aplikasi ditutup.</p></div></div>`;
 
     if (!all.length) {
       return `${storageWarn}<div id="install-slot">${installCard('list')}</div>
@@ -308,7 +325,7 @@
       <div class="empty">
         <h2>Belum ada invoice</h2>
         <p>Data usaha ${esc(S.settings.businessName || '')} sudah terisi. Anda bisa langsung membuat invoice, atau memeriksa datanya dulu di Pengaturan.</p>
-        <div class="row" style="justify-content:center;max-width:420px;margin:0 auto">
+        <div class="btn-row">
           <a class="btn primary" href="#/baru">${icon('plus')}Buat invoice pertama</a>
           <a class="btn" href="#/pengaturan">${icon('settings')}Periksa data usaha</a>
         </div>
@@ -326,7 +343,7 @@
     <div class="filters">
       <div class="search">${icon('search', 18)}<label for="q" class="sr-only">Cari invoice</label>
         <input class="input" id="q" type="search" placeholder="Cari nama pelanggan atau nomor" value="${esc(S.list.q)}" autocomplete="off"></div>
-      <div class="seg" role="group" aria-label="Saring status">
+      <div class="seg full" role="group" aria-label="Saring status">
         ${[['all', 'Semua'], ['unpaid', 'Belum lunas'], ['paid', 'Lunas']].map(([v, l]) => `<button type="button" data-act="filter" data-v="${v}" aria-pressed="${S.list.f === v}">${l}</button>`).join('')}
       </div>
     </div>
@@ -396,9 +413,11 @@
     const tpl = (name, val, key, label, sub) => `<label class="${key}"><input type="radio" name="${name}" value="${key}" ${val === key ? 'checked' : ''}><b>${label}</b><span>${sub}</span></label>`;
     return `<div class="editor ${e.pane === 'preview' ? 'pane-preview' : ''}" id="editor">
   <div class="ed-head">
-    <a class="icon-btn" href="${e.isNew ? '#/' : '#/invoice/' + esc(d.id)}" aria-label="Kembali">${icon('back')}</a>
-    <h1 class="page-title">${e.isNew ? 'Invoice baru' : 'Edit ' + esc(d.number)}</h1>
-    <div class="seg" role="group" aria-label="Tampilan">
+    <div class="ed-title">
+      <a class="icon-btn back" href="${e.isNew ? '#/' : '#/invoice/' + esc(d.id)}" aria-label="Kembali">${icon('back')}</a>
+      <h1 class="page-title">${e.isNew ? 'Invoice baru' : 'Edit ' + esc(d.number)}</h1>
+    </div>
+    <div class="seg full ed-tabs" role="group" aria-label="Tampilan">
       <button type="button" data-act="pane" data-v="form" aria-pressed="${e.pane !== 'preview'}">${icon('form', 18)}Isi data</button>
       <button type="button" data-act="pane" data-v="preview" aria-pressed="${e.pane === 'preview'}">${icon('eye', 18)}Pratinjau</button>
     </div>
@@ -419,15 +438,13 @@
       </section>
       <section class="card"><h2>Detail invoice</h2>
         <div class="stack">
-          <div class="row">
-            ${field({ id: 'f-number', label: 'Nomor invoice', value: d.number, attrs: 'data-f="number"' })}
-            <div class="field"><span class="lbl" id="lbl-status">Status</span>
-              <div class="seg" role="radiogroup" aria-labelledby="lbl-status">
+          ${field({ id: 'f-number', label: 'Nomor invoice', value: d.number, attrs: 'data-f="number"' })}
+          <div class="field"><span class="lbl" id="lbl-status">Status</span>
+              <div class="seg full" role="radiogroup" aria-labelledby="lbl-status">
                 <label><input type="radio" name="status" value="unpaid" ${d.status !== 'paid' ? 'checked' : ''}>Belum lunas</label>
                 <label><input type="radio" name="status" value="paid" ${d.status === 'paid' ? 'checked' : ''}>Lunas</label>
               </div></div>
-          </div>
-          <div class="row">
+          <div class="row pair">
             ${field({ id: 'f-issue', label: 'Tanggal terbit', type: 'date', value: d.issueDate, attrs: 'data-f="issueDate"' })}
             ${field({ id: 'f-due', label: 'Jatuh tempo', type: 'date', value: d.dueDate, attrs: 'data-f="dueDate"' })}
           </div>
@@ -440,11 +457,11 @@
       </section>
       <section class="card"><h2>Barang</h2>
         <div class="stack" id="items">${d.items.map(itemHtml).join('')}</div>
-        <button type="button" class="btn soft" data-act="add-item" style="margin-top:12px;width:100%">${icon('plus')}Tambah barang</button>
+        <button type="button" class="btn soft block" data-act="add-item" style="margin-top:16px">${icon('plus')}Tambah barang</button>
         <div class="err" id="err-items" aria-live="polite"></div>
       </section>
       <section class="card"><h2>Biaya lain</h2><p class="hint">Kosongkan jika tidak ada.</p>
-        <div class="row">
+        <div class="row pair">
           ${field({ id: 'f-disc', label: 'Diskon', money: true, value: d.discount ? IV.num(d.discount) : '', attrs: 'data-f="discount" data-money inputmode="numeric" placeholder="0"' })}
           ${field({ id: 'f-ship', label: 'Ongkos kirim', money: true, value: d.shipping ? IV.num(d.shipping) : '', attrs: 'data-f="shipping" data-money inputmode="numeric" placeholder="0"' })}
         </div>
@@ -602,7 +619,7 @@
     }
     e.dirty = false;
     S.ed = null;
-    location.hash = '#/invoice/' + d.id;
+    go('#/invoice/' + d.id);
     toast('Invoice disimpan');
   }
 
@@ -618,25 +635,37 @@
     ].filter(Boolean).join('\n');
     const waLink = wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : '';
     return `<div class="dt-wrap">
-  <div class="page-head">
-    <a class="icon-btn" href="#/" aria-label="Kembali ke riwayat">${icon('back')}</a>
+  <div class="dt-head">
+    <a class="icon-btn back" href="#/" aria-label="Kembali ke riwayat">${icon('back')}</a>
     <h1 class="page-title">${esc(inv.number)}</h1>${statusPill(inv)}
   </div>
-  <div class="dt-meta"><span>${esc((inv.client && inv.client.name) || '')}</span><span aria-hidden="true">·</span>
-    <span class="tnum">${IV.rp(invTotal(inv))}</span><span aria-hidden="true">·</span><span>Jatuh tempo ${IV.tgl(inv.dueDate)}</span></div>
-  <div class="dt-actions">
-    ${canShareFiles ? `<button type="button" class="btn primary" data-act="share-pdf">${icon('share')}Bagikan PDF</button>` : ''}
-    <button type="button" class="btn ${canShareFiles ? '' : 'primary'}" data-act="download-pdf">${icon('download')}Unduh PDF</button>
-    ${waLink ? `<a class="btn soft" href="${esc(waLink)}" target="_blank" rel="noopener">${icon('chat')}Kirim pesan WA</a>` : ''}
-  </div>
+  <div class="dt-meta"><span class="cn">${esc((inv.client && inv.client.name) || '')}</span>
+    <span><span class="tnum">${IV.rp(invTotal(inv))}</span> · Jatuh tempo ${IV.tgl(inv.dueDate)}</span></div>
+  <div class="dt-actions">${detailActions(waLink)}</div>
   <div class="dt-more">
-    <a class="btn small ghost" href="#/edit/${esc(inv.id)}">${icon('edit', 18)}Edit</a>
-    <button type="button" class="btn small ghost" data-act="toggle-paid">${inv.status === 'paid' ? icon('undo', 18) + 'Tandai belum lunas' : icon('check', 18) + 'Tandai lunas'}</button>
-    <button type="button" class="btn small ghost" data-act="duplicate">${icon('copy', 18)}Duplikat</button>
-    <button type="button" class="btn small ghost" data-act="delete" style="color:var(--bad-fg)">${icon('trash', 18)}Hapus</button>
+    <a class="btn small" href="#/edit/${esc(inv.id)}">${icon('edit', 18)}Edit</a>
+    <button type="button" class="btn small" data-act="toggle-paid">${inv.status === 'paid' ? icon('undo', 18) + 'Tandai belum lunas' : icon('check', 18) + 'Tandai lunas'}</button>
+    <button type="button" class="btn small" data-act="duplicate">${icon('copy', 18)}Duplikat</button>
+    <button type="button" class="btn small danger" data-act="delete">${icon('trash', 18)}Hapus</button>
   </div>
   <div class="pv-frame" id="pv" role="img" aria-label="Pratinjau invoice ${esc(inv.number)}"></div>
 </div>`;
+  }
+
+  /* Tombol utama selebar layar; tombol lain berpasangan, yang tersisa sendiri dibuat selebar layar. */
+  function detailActions(waLink) {
+    const primary = canShareFiles
+      ? `<button type="button" class="btn primary span2" data-act="share-pdf">${icon('share')}Bagikan PDF</button>`
+      : `<button type="button" class="btn primary span2" data-act="download-pdf">${icon('download')}Unduh PDF</button>`;
+    const rest = [];
+    if (canShareFiles) rest.push(['btn', `data-act="download-pdf"`, icon('download') + 'Unduh PDF', 'button']);
+    rest.push(['btn', `data-act="print"`, icon('print') + 'Cetak', 'button']);
+    if (waLink) rest.push(['btn soft', `href="${esc(waLink)}" target="_blank" rel="noopener"`, icon('chat') + 'Kirim WA', 'a']);
+    const html = rest.map(([cls, attrs, label, tag], i) => {
+      const wide = (rest.length % 2 === 1 && i === rest.length - 1) ? ' span2' : '';
+      return tag === 'a' ? `<a class="${cls}${wide}" ${attrs}>${label}</a>` : `<button type="button" class="${cls}${wide}" ${attrs}>${label}</button>`;
+    }).join('');
+    return primary + html;
   }
 
   /* ---------------- Pratinjau ---------------- */
@@ -687,7 +716,7 @@
   function getPdf(inv) {
     const key = inv.id + '|' + (inv.updatedAt || '') + '|' + S.settingsRev;
     if (pdfCache.has(key)) return pdfCache.get(key);
-    const job = pdfQueue.then(() => buildPdf(inv));
+    const job = pdfQueue.then(() => withTimeout(buildPdf(inv), 45000, 'waktu pembuatan PDF habis'));
     pdfQueue = job.catch(() => {});
     pdfCache.set(key, job);
     job.catch(() => pdfCache.delete(key));
@@ -728,6 +757,14 @@
     pdf.setProperties({ title: 'Invoice ' + inv.number, author: S.settings.businessName || '', creator: 'Invoice W Bouquet' });
     return pdf.output('blob');
   }
+  function withTimeout(p, ms, msg) {
+    return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(msg)), ms))]);
+  }
+  function pdfFail(err) {
+    console.error(err);
+    S.lastPdfError = (err && (err.message || err.name)) ? String(err.message || err.name) : String(err);
+    toast('PDF gagal dibuat (' + S.lastPdfError + '). Coba tombol Cetak, lalu pilih Simpan sebagai PDF.');
+  }
   function downloadBlob(blob, name) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -739,8 +776,8 @@
     const inv = byId(S.route.id);
     if (!inv) return;
     setBusy(btn, true, 'Membuat PDF…');
-    try { downloadBlob(await getPdf(inv), pdfName(inv)); toast('PDF tersimpan di folder Download'); }
-    catch (err) { console.error(err); toast('PDF gagal dibuat. Coba lagi.'); }
+    try { downloadBlob(await getPdf(inv), pdfName(inv)); S.lastPdfError = null; toast('PDF diunduh. Cek notifikasi atau folder Download.'); }
+    catch (err) { pdfFail(err); }
     finally { setBusy(btn, false); }
   }
   async function onSharePdf(btn) {
@@ -749,7 +786,7 @@
     setBusy(btn, true, 'Menyiapkan PDF…');
     let blob;
     try { blob = await getPdf(inv); }
-    catch (err) { console.error(err); setBusy(btn, false); toast('PDF gagal dibuat. Coba lagi.'); return; }
+    catch (err) { setBusy(btn, false); pdfFail(err); return; }
     setBusy(btn, false);
     const file = new File([blob], pdfName(inv), { type: 'application/pdf' });
     const share = () => navigator.share({ files: [file], title: 'Invoice ' + inv.number });
@@ -766,6 +803,48 @@
     }
   }
 
+  let printBusy = false;
+  async function onPrint() {
+    const inv = byId(S.route.id);
+    if (!inv || printBusy) return;
+    printBusy = true;
+    setTimeout(() => { printBusy = false; }, 1500);
+    const area = $('#print-area');
+    const tpl = InvoiceTemplates[inv.template] || InvoiceTemplates.serif;
+    area.innerHTML = tpl.render(inv, renderSettings());
+    if (document.fonts) await Promise.all(FONT_FACES.map((f) => document.fonts.load(f).catch(() => null)));
+    await Promise.all([...area.querySelectorAll('img')].map((img) => (img.complete && img.naturalWidth) ? null : new Promise((r) => { img.onload = r; img.onerror = r; })));
+    const oldTitle = document.title;
+    document.title = pdfName(inv).replace(/\.pdf$/, '');
+    const restore = () => { document.title = oldTitle; };
+    window.addEventListener('afterprint', restore, { once: true });
+    setTimeout(restore, 120000);
+    try { window.print(); }
+    catch (e) { restore(); toast('Browser ini tidak mendukung cetak.'); }
+  }
+
+  function diagInfo() {
+    const sw = ('serviceWorker' in navigator) ? (navigator.serviceWorker.controller ? 'aktif' : 'belum aktif') : 'tidak didukung';
+    return [
+      ['Versi aplikasi', APP_VERSION],
+      ['Mode', isStandalone() ? 'Aplikasi terpasang' : (inAppBrowser ? 'Browser di dalam aplikasi lain' : 'Browser')],
+      ['Mode offline', sw],
+      ['Bagikan file', canShareFiles ? 'didukung' : 'tidak didukung'],
+      ['Penyimpanan', Store.ok ? 'normal' : 'tidak tersedia'],
+      ['Tombol pasang', S.installEvt ? 'tersedia' : (isStandalone() ? 'sudah terpasang' : 'tidak ditawarkan browser')],
+      ['Error PDF terakhir', S.lastPdfError || 'tidak ada'],
+      ['Layar', window.innerWidth + '×' + window.innerHeight + ' @' + (window.devicePixelRatio || 1) + 'x'],
+      ['Browser', navigator.userAgent]
+    ];
+  }
+  function diagCard() {
+    return `<details class="card diag" id="diag">
+      <summary><span>${icon('info', 18)}Info teknis</span><span class="note-inline">untuk bantuan bila ada kendala</span></summary>
+      <dl>${diagInfo().map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+      <button type="button" class="btn small" data-act="copy-diag">${icon('copy', 18)}Salin info</button>
+    </details>`;
+  }
+
   /* ---------------- Layar: Pengaturan ---------------- */
   function viewSettings() {
     const s = S.settings;
@@ -779,9 +858,9 @@
   <section class="card"><h2>Profil usaha</h2><p class="hint">Tampil di setiap invoice. Perubahan tersimpan otomatis.</p>
     <div class="stack">
       <div class="logo-edit"><img id="logo-prev" src="${esc(logoSrc())}" alt="Logo usaha">
-        <div class="row" style="flex:1 1 220px">
+        <div class="le-actions">
           <label class="btn soft small file-btn">${icon('image', 18)}Ganti logo<input type="file" accept="image/*" id="logo-file"></label>
-          ${s.logo ? `<button type="button" class="btn ghost small" data-act="logo-reset">Pakai logo bawaan</button>` : ''}
+          ${s.logo ? `<button type="button" class="btn ghost small" data-act="logo-reset">Pakai logo bawaan</button>` : '<span class="note-inline">PNG atau JPG, bentuk persegi paling rapi.</span>'}
         </div></div>
       <div class="row">${sf('businessName', 'Nama usaha')}${sf('location', 'Kota / keterangan', { opt: true })}</div>
       ${sf('signer', 'Nama penanda tangan')}
@@ -799,7 +878,7 @@
 
   <section class="card"><h2>Nomor &amp; isi invoice</h2>
     <div class="stack">
-      <div class="row">${sf('prefix', 'Awalan nomor', { opt: true })}${sf('nextNumber', 'Nomor berikutnya', { attrs: 'data-s="nextNumber" inputmode="numeric"' })}</div>
+      <div class="row pair">${sf('prefix', 'Awalan nomor')}${sf('nextNumber', 'Nomor berikutnya', { attrs: 'data-s="nextNumber" inputmode="numeric"' })}</div>
       <small id="next-hint">Invoice berikutnya: <b>${esc(nextNumberStr())}</b></small>
       ${sf('termDays', 'Termin pembayaran (hari)', { attrs: 'data-s="termDays" inputmode="numeric"', hint: 'Jatuh tempo diisi otomatis sekian hari setelah tanggal terbit.' })}
       <div class="field"><span class="lbl" id="lbl-stpl">Desain bawaan</span>
@@ -812,17 +891,19 @@
 
   <section class="card"><h2>Data &amp; cadangan</h2><p class="hint">Semua invoice tersimpan di perangkat ini saja. Simpan cadangan secara berkala, lalu kirim filenya ke Google Drive atau WhatsApp agar aman.</p>
     <div class="stack">
-      <div class="row">
+      <div class="btn-row">
         <button type="button" class="btn soft" data-act="backup">${icon('download')}Simpan cadangan</button>
         <label class="btn file-btn">${icon('upload')}Pulihkan dari file<input type="file" accept="application/json,.json" id="restore-file"></label>
       </div>
       <small>${esc(last)}</small>
-      <div class="row">
-        <button type="button" class="btn ghost" data-act="reset-defaults">${icon('refresh')}Kembalikan data usaha bawaan</button>
+      <div class="divider"></div>
+      <div class="btn-row">
+        <button type="button" class="btn" data-act="reset-defaults">${icon('refresh')}Kembalikan data bawaan</button>
         <button type="button" class="btn danger" data-act="wipe">${icon('trash')}Hapus semua data</button>
       </div>
     </div></section>
-  <p style="text-align:center;color:var(--muted);font-size:12.5px;margin:4px 0 0">Invoice W Bouquet · versi ${APP_VERSION}</p>
+  ${diagCard()}
+  <p class="app-ver">Invoice W Bouquet · versi ${APP_VERSION}</p>
 </div>`;
   }
 
@@ -930,7 +1011,9 @@
     S.route = r;
     render();
   }
+  let renderSeq = 0;
   function render() {
+    renderSeq++;
     const r = S.route;
     const isEd = r.name === 'new' || r.name === 'edit';
     document.body.classList.toggle('mode-editor', isEd);
@@ -950,21 +1033,45 @@
     }
   }
 
+  /* Navigasi: setiap tautan internal ditangani langsung (tidak bergantung pada event hashchange saja). */
   let curHash = location.hash || '#/';
-  let ignoreHash = false;
+  let skipHash = null;
+  let guardOpen = false;
+  const isDirtyEdit = () => !!(S.ed && !S.ed.isNew && S.ed.dirty);
+  async function confirmLeave() {
+    guardOpen = true;
+    const v = await modal({
+      title: 'Perubahan belum disimpan',
+      body: 'Simpan perubahan pada invoice ini sebelum keluar?',
+      actions: [{ label: 'Tetap di sini', value: 'stay' }, { label: 'Buang', value: 'discard', kind: 'danger' }, { label: 'Simpan', value: 'save', kind: 'primary' }]
+    });
+    guardOpen = false;
+    if (v === 'discard') { S.ed.dirty = false; return 'go'; }
+    if (v === 'save') { await saveInvoice(); return 'saved'; }
+    return 'stay';
+  }
+  function go(h) {
+    const target = h || '#/';
+    if (guardOpen) return;
+    if (isDirtyEdit()) { confirmLeave().then((r) => { if (r === 'go') go(target); }); return; }
+    if ((location.hash || '#/') === target) { curHash = target; routeTo(); return; }
+    const seq = renderSeq;
+    location.hash = target;
+    setTimeout(() => {
+      if (renderSeq === seq && (location.hash || '#/') === target && !guardOpen) { curHash = target; routeTo(); }
+    }, 250);
+  }
   window.addEventListener('hashchange', async () => {
-    if (ignoreHash) { ignoreHash = false; curHash = location.hash || '#/'; return; }
     const target = location.hash || '#/';
-    if (S.ed && !S.ed.isNew && S.ed.dirty) {
-      ignoreHash = true;
-      location.hash = curHash;
-      const v = await modal({
-        title: 'Perubahan belum disimpan',
-        body: 'Simpan perubahan pada invoice ini sebelum keluar?',
-        actions: [{ label: 'Tetap di sini', value: 'stay' }, { label: 'Buang', value: 'discard', kind: 'danger' }, { label: 'Simpan', value: 'save', kind: 'primary' }]
-      });
-      if (v === 'discard') { S.ed.dirty = false; location.hash = target; }
-      else if (v === 'save') await saveInvoice();
+    if (skipHash !== null && target === skipHash) { skipHash = null; curHash = target; return; }
+    if (target === curHash) return;
+    if (isDirtyEdit() && !guardOpen) {
+      const back = curHash;
+      skipHash = back;
+      location.hash = back;
+      setTimeout(() => { if (skipHash === back) skipHash = null; }, 500);
+      const r = await confirmLeave();
+      if (r === 'go') go(target);
       return;
     }
     curHash = target;
@@ -976,6 +1083,12 @@
 
   /* ---------------- Aksi ---------------- */
   document.addEventListener('click', async (e) => {
+    const link = e.target.closest('a[href^="#/"]');
+    if (link && !e.defaultPrevented && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+      e.preventDefault();
+      go(link.getAttribute('href'));
+      return;
+    }
     const a = e.target.closest('[data-act]');
     if (!a) return;
     const act = a.dataset.act;
@@ -1034,7 +1147,7 @@
         S.draftNew = d;
         Store.set('draftNew', clone(d)).catch(() => {});
         prepareNew(d);
-        location.hash = '#/baru';
+        go('#/baru');
         toast('Salinan dibuat. Periksa lalu simpan.');
         break;
       }
@@ -1045,7 +1158,7 @@
         if (!ok) break;
         await Store.delInvoice(inv.id).catch(() => {});
         S.invoices = S.invoices.filter((i) => i.id !== inv.id);
-        location.hash = '#/';
+        go('#/');
         toast('Invoice dihapus');
         break;
       }
@@ -1075,17 +1188,27 @@
         S.settingsRev++;
         await Store.set('settings', S.settings).catch(() => {});
         toast('Semua data dihapus');
-        location.hash = '#/';
-        if (S.route.name === 'list') render();
+        go('#/');
         break;
       }
       case 'install':
         if (!S.installEvt) break;
         S.installEvt.prompt();
-        try { const c = await S.installEvt.userChoice; if (c && c.outcome === 'accepted') toast('Aplikasi dipasang di layar utama'); } catch (x) { /* abaikan */ }
+        try { const c = await S.installEvt.userChoice; if (c && c.outcome === 'accepted') toast('Sedang dipasang. Ikon W Invoice muncul dalam beberapa detik.'); } catch (x) { /* abaikan */ }
         S.installEvt = null;
         refreshInstallSlot();
         break;
+      case 'print': await onPrint(); break;
+      case 'copy-diag': {
+        const text = diagInfo().map(([k, v]) => k + ': ' + v).join('\n');
+        try { await navigator.clipboard.writeText(text); toast('Info teknis disalin'); }
+        catch (x) {
+          const dl = document.querySelector('#diag dl');
+          if (dl) { const rg = document.createRange(); rg.selectNodeContents(dl); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rg); }
+          toast('Tekan lama teks yang terpilih untuk menyalin.');
+        }
+        break;
+      }
       case 'update-reload':
         if (S.ed && S.ed.dirty && !S.ed.isNew) { toast('Simpan invoice yang sedang diedit dulu.'); break; }
         S.updateRequested = true;
