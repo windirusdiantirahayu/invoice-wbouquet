@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Invoice W Bouquet</title>
+<meta name="description" content="Buat, simpan, dan kirim invoice W Bouquet Sangkulirang langsung dari HP.">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#211A25" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preload" href="fonts/plus-jakarta-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/plus-jakarta-sans-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app"><p style="padding:48px 16px;text-align:center;color:#675B6E;font-family:system-ui,sans-serif">Memuat aplikasi…</p></div>
+<div class="toast-wrap"><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
+<div id="modal-root"></div>
+<div id="update-root"></div>
+<div id="pdf-stage" aria-hidden="true"></div>
+<noscript><p style="padding:24px;text-align:center">Aplikasi ini membutuhkan JavaScript. Aktifkan JavaScript di browser Anda.</p></noscript>
+<script src="templates.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
